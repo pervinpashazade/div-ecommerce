@@ -1,5 +1,6 @@
 import express from "express"
 import monngose from "mongoose"
+import 'dotenv/config';
 import { v1Router } from "./src/routes/index.js";
 import { appConfig } from "./src/consts.js";
 

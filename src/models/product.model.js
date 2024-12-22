@@ -52,4 +52,20 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: false
     }],
+    options: [{
+        key: {
+            type: String,
+            required: true
+        },
+        value: {
+            type: String,
+            required: true
+        },
+        code: {
+            type: String,
+            required: false
+        }
+    }],
 })
+
+export const Product = mongoose.model("Product", productSchema);

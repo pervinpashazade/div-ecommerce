@@ -2,6 +2,7 @@ import Joi from "joi"
 import bcrypt from "bcrypt"
 import { User } from "../models/user.model.js"
 import jwt from "jsonwebtoken"
+import 'dotenv/config';
 import { appConfig } from "../consts.js"
 
 const register = async (req, res) => {

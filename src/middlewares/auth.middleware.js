@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import 'dotenv/config';
 import { appConfig } from "../consts.js";
 import { User } from "../models/user.model.js";
 
@@ -30,4 +31,11 @@ export const useAuth = async (req, res, next) => {
             error,
         })
     }
+}
+
+export const userRole = async (req, res, next) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json("Siz admin deyilsiniz.")
+    }
+    next();
 }
