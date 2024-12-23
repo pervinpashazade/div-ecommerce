@@ -1,7 +1,8 @@
 import Joi from "joi";
 import { User } from "../models/user.model.js";
 import bcrypt from "bcrypt";
-import { error } from "../consts.js";
+import { appConfig, error } from "../consts.js";
+import { transporter } from "../service/nodemailer.js";
 
 const adminCreate = async (req, res, next) => {
   const validData = await Joi.object({
@@ -19,12 +20,12 @@ const adminCreate = async (req, res, next) => {
       });
     });
   try {
-    const existAdmin = await User.findOne({ email: validData.email });
+    // const existAdmin = await User.findOne({ email: validData.email });
 
-    if (existAdmin)
-      return res.status(409).json({
-        message: error[409],
-      });
+    // if (existAdmin)
+    //   return res.status(409).json({
+    //     message: error[409],
+    //   });
     validData.password = await bcrypt.hash(validData.password, 10);
 
     const newAdmin = new User({
@@ -32,7 +33,21 @@ const adminCreate = async (req, res, next) => {
       role: "admin",
     });
     await newAdmin.save();
+console.log(newAdmin.email);
 
+      const mailOptions = {
+    from: appConfig.EMAIL,
+    to: newAdmin.email,
+    subject: "Hello",
+    text: "Admin account created",
+  };
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error("Error sending email: ", error);
+    } else {
+      console.log("Email sent: ", info.response);
+    }
+  });
     return res.status(201).json(newAdmin);
   } catch (err) {
     return res.status(500).json({
