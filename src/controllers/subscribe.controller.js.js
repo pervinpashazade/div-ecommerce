@@ -32,8 +32,7 @@ const subscriber = async (req, res, next) => {
   }
   const newSubscriber = await Subscribe.create({
     email,
-    verifyExpiredIn,
-    verify_Code,
+  
   });
   res.json({message:"New subscriber created"});
   const transporter = nodemailer.createTransport({
@@ -73,23 +72,23 @@ const checkVerifyCode = async (req, res, next) => {
         .regex(/^[0-9]+$/)
         .required(),
     }).validateAsync(req.body, { abortEarly: false });
-    const user =req.existsSubscriber
-    if (!verify_code)
+    const user = await Subscribe.findOne({ email });
+    if (!user||!user.verify_Code)
       return res.status(404).json({
         message: "Veritification code is not found",
       });
-    if (existsSubscriber.verifyExpiredIn < new Date())
+    if (user.verifyExpiredIn< new Date())
       return res.status(404).json({
         message: "Veritification code is expired ",
       });
-    if ((existsSubscriber.verify_Code = Number(validData.code)))
+    if ((user.verify_Code !== Number(validData.code)))
       return res.status(400).json({
         message: "Veritificition code is incorrect",
       });
-      existsSubscriber.isVerifiedEmail = true;
-      existsSubscriber.verify_Code = null;
-      existsSubscriber.verifyExpiredIn = null;
-    await existsSubscriber.save()
+      user.isVerifiedEmail = true;
+      user.verify_Code = null;
+      user.verifyExpiredIn = null;
+    await user.save()
     return res.json({ message: "Code verified" });
   } catch (error) {
     console.error("Error:", error);
@@ -98,5 +97,6 @@ const checkVerifyCode = async (req, res, next) => {
 
 export const SubscribeController = () => ({
   subscriber,
-  checkVerifyCode,
+  checkVerifyCode
+ 
 });
