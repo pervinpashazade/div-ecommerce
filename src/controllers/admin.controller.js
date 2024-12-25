@@ -2,7 +2,7 @@ import Joi from "joi";
 import { User } from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import { appConfig, error } from "../consts.js";
-import { transporter } from "../service/nodemailer.js";
+
 
 const adminCreate = async (req, res, next) => {
   const validData = await Joi.object({
@@ -10,7 +10,7 @@ const adminCreate = async (req, res, next) => {
     surname: Joi.string().trim().min(3).max(12).required(),
     email: Joi.string().email().required(),
     password: Joi.string().trim().min(6).max(16).required(),
-    role: Joi.string().trim().optional()
+    role: Joi.string().trim().optional(),
   })
     .validateAsync(req.body, { abortEarly: false })
     .catch((err) => {
@@ -20,12 +20,6 @@ const adminCreate = async (req, res, next) => {
       });
     });
   try {
-    // const existAdmin = await User.findOne({ email: validData.email });
-
-    // if (existAdmin)
-    //   return res.status(409).json({
-    //     message: error[409],
-    //   });
     validData.password = await bcrypt.hash(validData.password, 10);
 
     const newAdmin = new User({
@@ -33,21 +27,8 @@ const adminCreate = async (req, res, next) => {
       role: "admin",
     });
     await newAdmin.save();
-console.log(newAdmin.email);
+    console.log(newAdmin.email);
 
-      const mailOptions = {
-    from: appConfig.EMAIL,
-    to: newAdmin.email,
-    subject: "Hello",
-    text: "Admin account created",
-  };
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error("Error sending email: ", error);
-    } else {
-      console.log("Email sent: ", info.response);
-    }
-  });
     return res.status(201).json(newAdmin);
   } catch (err) {
     return res.status(500).json({
@@ -58,10 +39,7 @@ console.log(newAdmin.email);
 };
 
 const adminEdit = async (req, res) => {
- 
   try {
-    
-
     const schema = Joi.object({
       name: Joi.string().trim().min(3).max(12),
       surname: Joi.string().trim().min(3).max(12),
@@ -71,7 +49,7 @@ const adminEdit = async (req, res) => {
     const validData = await schema.validateAsync(req.body, {
       abortEarly: false,
     });
-    
+
     const updatedAdmin = await User.findByIdAndUpdate(
       req.params.id,
       { ...validData },
@@ -100,9 +78,7 @@ const adminEdit = async (req, res) => {
   }
 };
 const adminDelete = async (req, res) => {
- 
   try {
-
     await User.deleteOne({ _id });
 
     return res.json({ message: "Admin uğurla silindi." });
@@ -114,33 +90,29 @@ const adminDelete = async (req, res) => {
 const adminRole = async (req, res, next) => {
   try {
     const schemaRole = Joi.object({
-      role: Joi.string().trim().optional()
+      role: Joi.string().trim().optional(),
     });
 
     const validData = await schemaRole.validateAsync(req.body);
 
-    const updatedRole = await User.findByIdAndUpdate(
-      req.params.id,
-      validData,
-      { new: true }
-    );
+    const updatedRole = await User.findByIdAndUpdate(req.params.id, validData, {
+      new: true,
+    });
 
     res.json(updatedRole);
   } catch (err) {
     if (err.isJoi) {
       return res.status(422).json({
         message: error[422],
-      })
+      });
     }
     res.status(500).json({ message: error[500] });
   }
-}
-
+};
 
 const adminList = async (req, res) => {
   try {
-
-    const admins = await User.find({ role: "admin" })
+    const admins = await User.find({ role: "admin" });
 
     if (!admins.length) {
       return res.status(404).json({
@@ -157,12 +129,10 @@ const adminList = async (req, res) => {
   }
 };
 
-
-
 export const AdminController = () => ({
   adminCreate,
   adminEdit,
   adminRole,
   adminDelete,
-  adminList
+  adminList,
 });
