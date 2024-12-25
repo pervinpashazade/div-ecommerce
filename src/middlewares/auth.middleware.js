@@ -23,7 +23,7 @@ export const useAuth = async (req, res, next) => {
     const jwtResult = jwt.verify(access_token, appConfig.JWT_SECRET);
 
     const user = await User.findById(jwtResult.sub).select(
-      "_id email name surname role"
+      "_id email name surname role isVerifiedEmail verifyCode verifyExpiredIn"
     );
     if (!user) return res.status(401).json({ message: "User not found!" });
 

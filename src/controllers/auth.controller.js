@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import moment from "moment";
 import nodemailer from "nodemailer";
 import { appConfig, error } from "../consts.js";
 
@@ -101,8 +102,8 @@ const login = async (req, res) => {
 
 const verifyEmail = async (req, res, next) => {
   try {
-    const { email } = req.user.email;
-
+    const  email  = req.user.email;
+console.log(req.user)
     if (req.user.isVerifiedEmail === true)
       return res.json({ message: "Email is already verified" });
 
@@ -116,7 +117,7 @@ const verifyEmail = async (req, res, next) => {
     await req.user.save();
 
     const mailOptions = {
-      from: Config.Email,
+      from: appConfig.EMAIL,
       to: email,
       subject: "Hello",
       text: `Please Verify your Email address ${verifyCode}`,

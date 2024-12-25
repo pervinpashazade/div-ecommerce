@@ -104,6 +104,11 @@ const checkVerifyCode = async (req, res) => {
     }).validateAsync(req.body);
 
     const subscribe = await Subscribe.findOne({ email: email });
+    const user = await User.findOne({ email });
+
+    if (subscribe.isVerifiedEmail===true) {
+        return res.json("Siz artiq verified olmusunuz");
+      }
 
     if (!subscribe.verifyCode) {
       return res.status(400).json({
@@ -123,6 +128,10 @@ const checkVerifyCode = async (req, res) => {
       { email },
       { isVerifiedEmail: true, verifyCode: null, verifyExpiredIn: null }
     );
+
+ if(user){
+    user.isVerifiedEmail = true }
+    await user.save()
     // subscribe.isVerifiedEmail = true;
     // subscribe.verifyCode = null;
     // subscribe.verifyExpiredIn = null;

@@ -9,3 +9,4 @@ const controller = AuthController();
 authRoutes.post("/login", controller.login);
 authRoutes.post("/register", controller.register);
 authRoutes.put("/password/reset", useAuth, controller.resetPass);
+authRoutes.get('/verify/email', useAuth, controller.verifyEmail)
