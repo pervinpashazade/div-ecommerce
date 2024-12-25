@@ -118,7 +118,7 @@ const userDelete = async (req, res) => {
   try {
     await User.deleteOne({ _id });
 
-    return res.json({ message: "User uğurla silindi." });
+    return res.json({ message: "User uğurla silindi!" });
   } catch (err) {
     return res.status(500).json({ message: error[500], error: err.message });
   }
