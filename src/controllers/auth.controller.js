@@ -6,6 +6,7 @@ import "dotenv/config";
 import moment from "moment";
 import nodemailer from "nodemailer";
 import { appConfig, error } from "../consts.js";
+import { v4 as uuidv4 } from 'uuid';
 
 const transporter = nodemailer.createTransport({
   service: "Gmail",
@@ -102,8 +103,8 @@ const login = async (req, res) => {
 
 const verifyEmail = async (req, res, next) => {
   try {
-    const  email  = req.user.email;
-console.log(req.user)
+    const email = req.user.email;
+
     if (req.user.isVerifiedEmail === true)
       return res.json({ message: "Email is already verified" });
 
@@ -224,10 +225,98 @@ const resetPass = async (req, res) => {
   }
 };
 
+const ForgetPass = async (req, res, next) => {
+  const user = await User.findOne({
+    email: req.body.email,
+  });
+
+  if (!user) {
+    return res.status(401).json({
+      message: "Belə bir istifadəçi yoxdur",
+    });
+  }
+
+  const token = uuidv4();
+  const resetExpiredIn = moment().add(appConfig.MINUTE, "minutes");
+
+  res.json("Check your email");
+
+  const resetUrl = `${appConfig.CLIENT_BASE_URL}${token}`;
+
+  const mailOptions = {
+    from: appConfig.EMAIL,
+    to: req.body.email,
+    subject: "Password Reset Request",
+    html: `<h3>Password Reset</h3>
+               <p>To reset your password, click the link below:</p>
+               <a href="${resetUrl}">Reset Password</a>
+               <p>This link is valid for ${appConfig.MINUTE} minute.</p>`,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return res.status(500).json({ message: "Error sending email", error });
+    }
+    return res
+      .status(200)
+      .json({ message: "Password reset email sent successfully." });
+  });
+
+  user.uuidToken = token;
+  user.resetExpiredIn = resetExpiredIn;
+
+  await user.save();
+};
+
+const CreatePass = async (req, res, next) => {
+  const data = await Joi.object({
+    newPassword: Joi.string().trim().min(6).max(16).required(),
+  })
+    .validateAsync(req.body)
+    .catch((err) => {
+      console.log("err:", err);
+      return res.status(422).json({
+        message: "Xeta bash verdi!",
+        error: err.details.map((item) => item.message),
+      });
+    });
+
+  const user = await User.findOne({
+    uuidToken: req.params.uuidToken,
+  });
+
+  if (!user || !data.newPassword) {
+    return res.status(401).json({
+      message: "Token və ya password yoxdur",
+    });
+  }
+
+  if (user.resetExpiredIn < Date.now()) {
+    return res.status(401).json({
+      message: "Artıq vaxt bitib, yenidən cəhd edin!!!",
+    });
+  }
+  const ValidPassword = await bcrypt.compare(
+    data.newPassword,
+    user.password
+  );
+
+  if (ValidPassword) return res.json("Əvvəlki parolu yaza bilməzsiniz");
+
+  const newPassword = await bcrypt.hash(data.newPassword, 10);
+
+  user.password = newPassword;
+  user.uuidToken = null;
+  await user.save();
+  res.send(`${user.email} mailinin password-ü yeniləndi`);
+};
+
 export const AuthController = () => ({
   login,
   register,
   resetPass,
   verifyEmail,
-  checkVerifyCode
+  checkVerifyCode,
+  ForgetPass,
+  CreatePass,
 });
