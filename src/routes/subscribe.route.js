@@ -6,4 +6,4 @@ export const subscribeRoutes = Router()
 const controller = subscribeController()
 
 subscribeRoutes.post("/verify/email", controller.verifyEmail)
-subscribeRoutes.post('/check/verify/code', controller.checkVerifyCode)
+subscribeRoutes.post('/check/verify/code/:token', controller.checkVerifyCode)

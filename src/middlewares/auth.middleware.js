@@ -23,7 +23,7 @@ export const useAuth = async (req, res, next) => {
     const jwtResult = jwt.verify(access_token, appConfig.JWT_SECRET);
 
     const user = await User.findById(jwtResult.sub).select(
-      "_id email name surname role isVerifiedEmail verifyCode verifyExpiredIn uuidToken resetExpiredIn"
+      "_id email name surname role isVerifiedEmail verifyCode verifyExpiredIn uuidToken resetExpiredIn status"
     );
     if (!user) return res.status(401).json({ message: "User not found!" });
 
@@ -42,8 +42,13 @@ export const roleCheck = (role) => {
   return (req, res, next) => {
     const userRole = req.user.role;
 
+
     if (!role.includes(userRole)) {
       return res.status(403).json({ message: error[403] });
+    }
+
+    if(req.user.status === "deactive"){
+      return res.json("Siz active user deyilsiniz!!!")
     }
 
     next();
