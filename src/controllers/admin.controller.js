@@ -26,21 +26,21 @@ const userCreate = async (req, res, next) => {
   }
 
   try {
-    const existAdmin = await User.findOne({ email: validData.email });
+    const existUser = await User.findOne({ email: validData.email });
 
-    if (existAdmin)
+    if (existUser)
       return res.status(409).json({
         message: error[409],
       });
 
     validData.password = await bcrypt.hash(validData.password, 10);
 
-    const newAdmin = new User({
+    const newUser = new User({
       ...validData,
     });
-    await newAdmin.save();
+    await newUser.save();
 
-    const { _id, name, surname, email, role } = newAdmin;
+    const { _id, name, surname, email, role } = newUser;
 
     return res.status(201).json({ _id, name, surname, email, role });
   } catch (err) {
@@ -84,7 +84,7 @@ const userEdit = async (req, res) => {
       return res.status(200).json({ message: "Heç bir dəyişiklik yoxdur" });
     }
 
-    const updatedAdmin = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       { ...validData },
       {
@@ -93,11 +93,11 @@ const userEdit = async (req, res) => {
       }
     );
 
-    if (!updatedAdmin) {
+    if (!updatedUser) {
       return res.status(500).json({ message: error[500] });
     }
 
-    const { _id, name, surname, email, role , status} = updatedAdmin;
+    const { _id, name, surname, email, role , status} = updatedUser;
 
     return res.status(200).json({ _id, name, surname, email, role, status });
   } catch (err) {
