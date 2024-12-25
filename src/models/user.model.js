@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: "customer",
     },
+    status: {
+      type: String,
+      required: true,
+      default: "active",
+    },
     companyName: {
       type: String,
       required: false,

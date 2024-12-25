@@ -16,3 +16,11 @@ export const error = {
   400: "Səhv sorğu! Tələb olunan məlumat çatışmır və ya yanlışdır.",
   401: "Doğrulama xətası! Giriş etibarsızdır və ya parol yanlışdır.",
 };
+
+export const usersList = [
+  "customer",
+"admin", 
+"superadmin", 
+"ordinator", 
+"cordinator"
+]

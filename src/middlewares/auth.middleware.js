@@ -56,11 +56,12 @@ export const idCheck=async(req,res,next)=>{
   if (!id) {
     return res.status(400).json({ message: error[400] });
   }
-  const adminToEdit = await User.findById(id);
+  const user = await User.findById(id);
 
-  if (!adminToEdit) {
+  if (!user) {
     return res.status(404).json({ message: error[404] });
   }
+  req.user = user
   next()
  } catch (error) {
   return res.status(500).json({
