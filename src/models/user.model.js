@@ -17,6 +17,26 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    isVerifiedEmail: {
+        type: Boolean,
+        default: null,
+      },
+      verifyCode: {
+        type: Number,
+        default: null,
+      },
+      verifyExpiredIn: {
+        type: Date,
+        default: null,
+      },
+      uuidToken:{
+        type:String,
+        default:null
+      },
+      resetExpiredIn:{
+        type: Date,
+        default: null
+    },
     role: {
         type: String,
         required: true,
@@ -50,6 +70,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-});
+}, {timestamps:true});
 
 export const User = mongoose.model("User", userSchema);

@@ -3,7 +3,19 @@ import bcrypt from "bcrypt";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import nodemailer from "nodemailer";
 import { appConfig, error } from "../consts.js";
+
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: appConfig.EMAIL,
+    pass: appConfig.EMAIL_PASSWORD,
+  },
+});
 
 const register = async (req, res) => {
   // 1. validation
@@ -86,6 +98,85 @@ const login = async (req, res) => {
     access_token: new_token,
   });
 };
+
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { email } = req.user.email;
+
+    if (req.user.isVerifiedEmail === true)
+      return res.json({ message: "Email is already verified" });
+
+    const verifyCode = Math.floor(100000 + Math.random() * 600000);
+
+    const verifyExpiredIn = moment().add(appConfig.MINUTE, "minutes");
+
+    req.user.verifyCode = verifyCode;
+    req.user.verifyExpiredIn = verifyExpiredIn;
+
+    await req.user.save();
+
+    const mailOptions = {
+      from: Config.Email,
+      to: email,
+      subject: "Hello",
+      text: `Please Verify your Email address ${verifyCode}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email: ", error);
+        return res.status(500).json({
+          message: error.message,
+          error,
+        });
+      } else {
+        return res.json({ message: "Check your email" });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+      error,
+    });
+  }
+};
+
+const checkVerifyCode = async (req, res) => {
+  try {
+    const validData = await Joi.object({
+      code: Joi.number().min(100000).max(999999).required(),
+    }).validateAsync(req.body, { abortEarly: false });
+
+    const user = req.user;
+
+    if (!user.verifyCode) {
+      return res.status(400).json({
+        message: "Verification code not found!",
+      });
+    }
+
+    if (user.verifyExpiredIn < Date.now()) {
+      return res.status(400).json("artıq vaxt bitib, yenidən cəhd edin");
+    }
+
+    if (user.verifyCode !== validData.code) {
+      return res.status(400).json("kod eyni deyil");
+    }
+    req.user.isVerifiedEmail = true;
+    req.user.verifyCode = null;
+    req.user.verifyExpiredIn = null;
+    await req.user.save();
+    return res.json({
+      message: "Email verified successfully!",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+      error,
+    });
+  }
+};
+
 const resetPass = async (req, res) => {
   const user = req.user;
 
@@ -133,7 +224,9 @@ const resetPass = async (req, res) => {
 };
 
 export const AuthController = () => ({
-    login,
-    register,
-    resetPass,
-})
+  login,
+  register,
+  resetPass,
+  verifyEmail,
+  checkVerifyCode
+});
