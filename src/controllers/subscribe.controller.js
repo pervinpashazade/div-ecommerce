@@ -44,35 +44,19 @@ const verifyEmail = async (req, res, next) => {
       return res.json("Email is already verified, you can continue");
     }
 
-    const verifyCode = Math.floor(100000 + Math.random() * 600000);
+    const token = uuidv4();
 
     const verifyExpiredIn = moment().add(appConfig.MINUTE, "minutes");
-
-    if (subscribe) {
-      subscribe.verifyCode = verifyCode;
-      subscribe.verifyExpiredIn = verifyExpiredIn;
-      res.json(subscribe);
-      return subscribe.save();
-    }
-
-    await Subscribe.create({
-      email,
-      verifyCode,
-      verifyExpiredIn,
-    })
-      .then((newSubscribe) => res.status(201).json(newSubscribe))
-      .catch((error) =>
-        res.status(500).json({
-          message: "Xeta bash verdi!",
-          error,
-        })
-      );
+    const verifyUrl = `${appConfig.VERIFY_URL}${token}`;
 
     const mailOptions = {
       from: appConfig.EMAIL,
       to: email,
-      subject: "Hello",
-      text: `Please Verify your Email address ${verifyCode}`,
+      subject: "Verify Email",
+      html: `<h3>Verify Email</h3>
+                   <p>To verify your email, click the link below:</p>
+                   <a href="${verifyUrl}">Verify Email</a>
+                   <p>This link is valid for ${appConfig.MINUTE} minute.</p>`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -86,7 +70,27 @@ const verifyEmail = async (req, res, next) => {
         console.log("Email sent: ", info);
         return res.json({ message: "Check your email" });
       }
-    });
+    })
+
+    if (subscribe) {
+      subscribe.verifyExpiredIn = verifyExpiredIn;
+      subscribe.token = token;
+      res.json(subscribe);
+      return subscribe.save();
+    }
+
+    await Subscribe.create({
+      email,
+      verifyExpiredIn,
+      token,
+    })
+      .then((newSubscribe) => res.status(201).json(newSubscribe))
+      .catch((error) =>
+        res.status(500).json({
+          message: "Xeta bash verdi!",
+          error,
+        })
+      );
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -95,47 +99,36 @@ const verifyEmail = async (req, res, next) => {
   }
 };
 
-const checkVerifyCode = async (req, res) => {
+const checkVerifyToken = async (req, res) => {
   try {
-    const email = req.query.email;
+    if (!req.params.token) return res.json("Token is required");
 
-    const { code } = await Joi.object({
-      code: Joi.number().min(100000).max(999999).required(),
-    }).validateAsync(req.body);
+    const subscribe = await Subscribe.findOne({
+      token: req.params.token,
+    });
 
-    const subscribe = await Subscribe.findOne({ email: email });
-    const user = await User.findOne({ email });
+    if (!subscribe) return res.json("Bu tokene uygun mail yoxdur");
 
-    if (subscribe.isVerifiedEmail===true) {
-        return res.json("Siz artiq verified olmusunuz");
-      }
+    const user = await User.findOne({ email: subscribe.email });
 
-    if (!subscribe.verifyCode) {
-      return res.status(400).json({
-        message: "Verification code not found!",
-      });
+    if (subscribe.isVerifiedEmail === true) {
+      return res.json("Siz artiq verified olmusunuz");
     }
 
     if (subscribe.verifyExpiredIn < Date.now()) {
       return res.status(400).json("artıq vaxt bitib, yenidən cəhd edin");
     }
 
-    if (subscribe.verifyCode !== code) {
-      return res.status(400).json("kod eyni deyil");
-    }
-
     await Subscribe.updateMany(
-      { email },
-      { isVerifiedEmail: true, verifyCode: null, verifyExpiredIn: null }
+      { email: subscribe.email },
+      { isVerifiedEmail: true, verifyExpiredIn: null }
     );
 
- if(user){
-    user.isVerifiedEmail = true }
-    await user.save()
-    // subscribe.isVerifiedEmail = true;
-    // subscribe.verifyCode = null;
-    // subscribe.verifyExpiredIn = null;
-    // await subscribe.save();
+    if (user) {
+      user.isVerifiedEmail = true;
+      await user.save();
+    }
+
     return res.json({
       message: "Email verified successfully!",
     });
@@ -149,5 +142,5 @@ const checkVerifyCode = async (req, res) => {
 
 export const subscribeController = () => ({
   verifyEmail,
-  checkVerifyCode,
+  checkVerifyToken,
 });

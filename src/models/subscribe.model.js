@@ -9,12 +9,12 @@ const subscribeSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  verifyCode: {
-    type: Number,
-    default: null,
-  },
   verifyExpiredIn: {
     type: Date,
+    default: null,
+  },
+  token: {
+    type: String,
     default: null,
   },
 

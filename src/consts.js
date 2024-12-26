@@ -5,7 +5,8 @@ export const appConfig = {
   EMAIL: process.env.EMAIL,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
   MINUTE: process.env. MINUTE,
-  CLIENT_BASE_URL: process.env.CLIENT_BASE_URL
+  CLIENT_BASE_URL: process.env.CLIENT_BASE_URL,
+  VERIFY_URL: process.env.VERIFY_URL
 };
 export const error = {
   422: "Validasiya Xətası!",
