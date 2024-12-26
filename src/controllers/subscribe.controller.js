@@ -98,7 +98,7 @@ const verifyEmail = async (req, res, next) => {
   }
 };
 
-const checkVerifyCode = async (req, res) => {
+const checkVerifyToken = async (req, res) => {
   try {
     if (!req.params.token) return res.json("Token is required");
 
@@ -141,5 +141,5 @@ const checkVerifyCode = async (req, res) => {
 
 export const subscribeController = () => ({
   verifyEmail,
-  checkVerifyCode,
+  checkVerifyToken,
 });

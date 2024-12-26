@@ -214,7 +214,7 @@ const userEdit = async (req, res) => {
 
 const userDelete = async (req, res) => {
   try {
-    await User.deleteOne({ _id });
+    await User.deleteOne({ _id: req.params.id });
 
     return res.json({ message: "User uğurla silindi!" });
   } catch (err) {

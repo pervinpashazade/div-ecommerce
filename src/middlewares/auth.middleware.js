@@ -58,6 +58,7 @@ export const roleCheck = (role) => {
 export const idCheck=async(req,res,next)=>{
  try {
   const { id } = req.params;
+
   if (!id) {
     return res.status(400).json({ message: error[400] });
   }
@@ -66,6 +67,7 @@ export const idCheck=async(req,res,next)=>{
   if (!user) {
     return res.status(404).json({ message: error[404] });
   }
+ 
   req.user = user
   next()
  } catch (error) {
