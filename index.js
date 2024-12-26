@@ -11,7 +11,7 @@ app.use(express.json());
 app.use("/api/v1", v1Router);
 
 monngose
-  .connect(appConfig.MONGO_URL, { dbName: "email" })
+  .connect(appConfig.MONGO_URL)
   .then(() => {
     console.log("Connected to MongoDB");
   })
