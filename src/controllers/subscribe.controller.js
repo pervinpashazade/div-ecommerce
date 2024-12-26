@@ -92,7 +92,7 @@ const subscribeVerify = async (req, res) => {
     if (!isEmailSent) {
       return res
         .status(500)
-        .json({ message: "E-posta bildirimi gönderilemedi." });
+        .json({ message: "E-posta bildirimi gönderilmedi." });
     }
 
     await existEmail.save();
