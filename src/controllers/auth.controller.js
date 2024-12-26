@@ -3,7 +3,21 @@ import bcrypt from "bcrypt";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import moment from "moment";
+import nodemailer from "nodemailer";
 import { appConfig, error } from "../consts.js";
+import { v4 as uuidv4 } from 'uuid';
+
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: appConfig.EMAIL,
+    pass: appConfig.EMAIL_PASSWORD,
+  },
+});
 
 const register = async (req, res) => {
   // 1. validation
@@ -86,6 +100,85 @@ const login = async (req, res) => {
     access_token: new_token,
   });
 };
+
+const verifyEmail = async (req, res, next) => {
+  try {
+    const email = req.user.email;
+
+    if (req.user.isVerifiedEmail === true)
+      return res.json({ message: "Email is already verified" });
+
+    const verifyCode = Math.floor(100000 + Math.random() * 600000);
+
+    const verifyExpiredIn = moment().add(appConfig.MINUTE, "minutes");
+
+    req.user.verifyCode = verifyCode;
+    req.user.verifyExpiredIn = verifyExpiredIn;
+
+    await req.user.save();
+
+    const mailOptions = {
+      from: appConfig.EMAIL,
+      to: email,
+      subject: "Hello",
+      text: `Please Verify your Email address ${verifyCode}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email: ", error);
+        return res.status(500).json({
+          message: error.message,
+          error,
+        });
+      } else {
+        return res.json({ message: "Check your email" });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+      error,
+    });
+  }
+};
+
+const checkVerifyCode = async (req, res) => {
+  try {
+    const validData = await Joi.object({
+      code: Joi.number().min(100000).max(999999).required(),
+    }).validateAsync(req.body, { abortEarly: false });
+
+    const user = req.user;
+
+    if (!user.verifyCode) {
+      return res.status(400).json({
+        message: "Verification code not found!",
+      });
+    }
+
+    if (user.verifyExpiredIn < Date.now()) {
+      return res.status(400).json("artıq vaxt bitib, yenidən cəhd edin");
+    }
+
+    if (user.verifyCode !== validData.code) {
+      return res.status(400).json("kod eyni deyil");
+    }
+    req.user.isVerifiedEmail = true;
+    req.user.verifyCode = null;
+    req.user.verifyExpiredIn = null;
+    await req.user.save();
+    return res.json({
+      message: "Email verified successfully!",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+      error,
+    });
+  }
+};
+
 const resetPass = async (req, res) => {
   const user = req.user;
 
@@ -132,8 +225,98 @@ const resetPass = async (req, res) => {
   }
 };
 
+const ForgetPass = async (req, res, next) => {
+  const user = await User.findOne({
+    email: req.body.email,
+  });
+
+  if (!user) {
+    return res.status(401).json({
+      message: "Belə bir istifadəçi yoxdur",
+    });
+  }
+
+  const token = uuidv4();
+  const resetExpiredIn = moment().add(appConfig.MINUTE, "minutes");
+
+  res.json("Check your email");
+
+  const resetUrl = `${appConfig.CLIENT_BASE_URL}${token}`;
+
+  const mailOptions = {
+    from: appConfig.EMAIL,
+    to: req.body.email,
+    subject: "Password Reset Request",
+    html: `<h3>Password Reset</h3>
+               <p>To reset your password, click the link below:</p>
+               <a href="${resetUrl}">Reset Password</a>
+               <p>This link is valid for ${appConfig.MINUTE} minute.</p>`,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return res.status(500).json({ message: "Error sending email", error });
+    }
+    return res
+      .status(200)
+      .json({ message: "Password reset email sent successfully." });
+  });
+
+  user.uuidToken = token;
+  user.resetExpiredIn = resetExpiredIn;
+
+  await user.save();
+};
+
+const CreatePass = async (req, res, next) => {
+  const data = await Joi.object({
+    newPassword: Joi.string().trim().min(6).max(16).required(),
+  })
+    .validateAsync(req.body)
+    .catch((err) => {
+      console.log("err:", err);
+      return res.status(422).json({
+        message: "Xeta bash verdi!",
+        error: err.details.map((item) => item.message),
+      });
+    });
+
+  const user = await User.findOne({
+    uuidToken: req.params.uuidToken,
+  });
+
+  if (!user || !data.newPassword) {
+    return res.status(401).json({
+      message: "Token və ya password yoxdur",
+    });
+  }
+
+  if (user.resetExpiredIn < Date.now()) {
+    return res.status(401).json({
+      message: "Artıq vaxt bitib, yenidən cəhd edin!!!",
+    });
+  }
+  const ValidPassword = await bcrypt.compare(
+    data.newPassword,
+    user.password
+  );
+
+  if (ValidPassword) return res.json("Əvvəlki parolu yaza bilməzsiniz");
+
+  const newPassword = await bcrypt.hash(data.newPassword, 10);
+
+  user.password = newPassword;
+  user.uuidToken = null;
+  await user.save();
+  res.send(`${user.email} mailinin password-ü yeniləndi`);
+};
+
 export const AuthController = () => ({
-    login,
-    register,
-    resetPass,
-})
+  login,
+  register,
+  resetPass,
+  verifyEmail,
+  checkVerifyCode,
+  ForgetPass,
+  CreatePass,
+});
