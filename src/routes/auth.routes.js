@@ -9,3 +9,7 @@ const controller = AuthController();
 authRoutes.post("/login", controller.login);
 authRoutes.post("/register", controller.register);
 authRoutes.put("/password/reset", useAuth, controller.resetPass);
+authRoutes.get('/verify/email', useAuth, controller.verifyEmail)
+authRoutes.post('/check/verify/code', useAuth, controller.checkVerifyCode)
+authRoutes.post('/forget/pass',controller.ForgetPass)
+authRoutes.post('/create/pass/:uuidToken',controller.CreatePass)

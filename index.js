@@ -3,8 +3,11 @@ import monngose from "mongoose"
 import 'dotenv/config';
 import { v1Router } from "./src/routes/index.js";
 import { appConfig } from "./src/consts.js";
+import { limiter } from "./src/helpers.js";
 
 const app = express();
+
+app.use(limiter)
 
 app.use(express.json());
 
