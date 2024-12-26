@@ -1,36 +1,16 @@
-import express from "express";
 import Joi from "joi";
-import bcrypt from "bcrypt";
-import nodemailer from "nodemailer";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
 import { appConfig } from "../consts.js";
 import { User } from "../models/user.model.js";
 import { Subscribe } from "../models/subscribe.model.js";
-
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: appConfig.EMAIL,
-    pass: appConfig.EMAIL_PASSWORD,
-  },
-});
+import { transporter } from "../helpers.js";
 
 const verifyEmail = async (req, res, next) => {
   try {
     const { email } = await Joi.object({
       email: Joi.string().trim().email().required(),
-    })
-      .validateAsync(req.body)
-      .catch((err) => {
-        return res.status(422).json({
-          message: "Xeta bash verdi!",
-          error: err.details.map((item) => item.message),
-        });
-      });
+    }).validateAsync(req.body);
 
     const subscribe = await Subscribe.findOne({ email });
 
@@ -46,7 +26,8 @@ const verifyEmail = async (req, res, next) => {
 
     const token = uuidv4();
 
-    const verifyExpiredIn = moment().add(appConfig.MINUTE, "minutes");const verifyUrl = `${appConfig.VERIFY_URL}${token}`;
+    const verifyExpiredIn = moment().add(appConfig.MINUTE, "minutes");
+    const verifyUrl = `${appConfig.VERIFY_URL}${token}`;
 
     const mailOptions = {
       from: appConfig.EMAIL,
@@ -69,7 +50,7 @@ const verifyEmail = async (req, res, next) => {
         console.log("Email sent: ", info);
         return res.json({ message: "Check your email" });
       }
-    })
+    });
 
     if (subscribe) {
       subscribe.verifyExpiredIn = verifyExpiredIn;

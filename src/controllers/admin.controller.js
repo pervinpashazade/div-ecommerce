@@ -1,20 +1,9 @@
 import Joi from "joi";
 import { User } from "../models/user.model.js";
 import bcrypt from "bcrypt";
-import nodemailer from "nodemailer";
 import { error, usersList } from "../consts.js";
 import { appConfig } from "../consts.js";
-
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: appConfig.EMAIL,
-    pass: appConfig.EMAIL_PASSWORD,
-  },
-});
+import { transporter } from "../helpers.js";
 
 const userCreate = async (req, res, next) => {
   const validData = await Joi.object({

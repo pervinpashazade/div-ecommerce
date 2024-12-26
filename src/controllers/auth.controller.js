@@ -4,20 +4,9 @@ import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
 import moment from "moment";
-import nodemailer from "nodemailer";
 import { appConfig, error } from "../consts.js";
-import { v4 as uuidv4 } from 'uuid';
-
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: appConfig.EMAIL,
-    pass: appConfig.EMAIL_PASSWORD,
-  },
-});
+import { v4 as uuidv4 } from "uuid";
+import { transporter } from "../helpers.js";
 
 const register = async (req, res) => {
   // 1. validation
@@ -296,10 +285,7 @@ const CreatePass = async (req, res, next) => {
       message: "Artıq vaxt bitib, yenidən cəhd edin!!!",
     });
   }
-  const ValidPassword = await bcrypt.compare(
-    data.newPassword,
-    user.password
-  );
+  const ValidPassword = await bcrypt.compare(data.newPassword, user.password);
 
   if (ValidPassword) return res.json("Əvvəlki parolu yaza bilməzsiniz");
 
