@@ -11,7 +11,7 @@ const subscriberSchema = new mongoose.Schema({
     default: false,
   },
   verify_Code: {
-    type: String,
+    type: Number,
     default: null,
   },
   verifyExpiredIn: {
