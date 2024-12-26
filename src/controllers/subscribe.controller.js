@@ -22,7 +22,7 @@ const createSubscriber = async (req, res) => {
     const verificationCode = helpers.otp6; // 6 rəqəmli təsdiq kodu
     const verifyExpiredIn = helpers.generateExpiryDate;
 
-    if (existsSubscriber && existsSubscriber.isVerifiedEmail === false) {
+    if (existsSubscriber) {
       existsSubscriber.verify_Code = verificationCode;
       existsSubscriber.verifyExpiredIn = verifyExpiredIn;
       await existsSubscriber.save();
