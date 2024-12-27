@@ -4,3 +4,4 @@ export const subscribeRouter = express.Router();
 const controller = subscribeController();
 subscribeRouter.post("/", controller.subscribeEmail);
 subscribeRouter.post("/verify", controller.subscribeVerify);
+subscribeRouter.get("/fake-users", controller.fakeUserGenerate);

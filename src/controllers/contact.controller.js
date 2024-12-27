@@ -30,7 +30,7 @@ const create = async (req, res, next) => {
       message: "Bu email-ə uygun user movcud deyil",
     });
   }
-  const newMessage = await Contact.create({
+  await Contact.create({
     name: data.name,
     email: data.email,
     phone: data.phone,

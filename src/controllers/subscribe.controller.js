@@ -3,6 +3,7 @@ import { error } from "../consts.js";
 import { subscribeModel } from "../models/subscribe.model.js";
 import moment from "moment/moment.js";
 import { sendEmailMessage } from "../Utility/email.sent.js";
+import { faker } from "@faker-js/faker";
 
 const subscribeEmail = async (req, res) => {
   try {
@@ -113,6 +114,27 @@ const subscribeVerify = async (req, res) => {
   }
 };
 
+const fakeUserGenerate = async (req, res) => {
+  const {count} = req.query
+  const fakeUsers=[]
+  
+  for (let index = 0; index < count; index++) {
+    
+    fakeUsers.push({
+      email: faker.internet.email(),
+      isVerify: false,
+      verifyCode: 0,
+      isexpiredAt: faker.date.future()
+    })
+    
+    console.log(fakeUsers, " useressss");
+
+  }
+  const createdUsers=await subscribeModel.insertMany(fakeUsers)
+  res.json(createdUsers)
+}
+
+
 export const subscribeController = () => {
-  return { subscribeEmail, subscribeVerify };
+  return { subscribeEmail, subscribeVerify, fakeUserGenerate };
 };
