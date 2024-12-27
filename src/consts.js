@@ -20,8 +20,8 @@ export const error = {
 
 export const usersList = [
   "customer",
-"admin", 
-"superadmin", 
-"ordinator", 
-"cordinator"
+  "admin", 
+  "superadmin", 
+  "ordinator", 
+  "cordinator"
 ]

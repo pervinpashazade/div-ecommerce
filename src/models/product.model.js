@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    raiting: {
+    rating: {
         type: Number,
         required: false,
         default: 0
@@ -44,22 +44,22 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: false
     }],
-    mainImg: {
+    main_img_url: {
         type: String,
-        required: true
+        // required: true
     },
-    images: [{
+    image_urls: [{
         type: String,
         required: false
     }],
     options: [{
         key: {
-            type: String,
-            required: true
+            type: String, 
+            // required: true
         },
         value: {
             type: String,
-            required: true
+            // required: true
         },
         code: {
             type: String,
