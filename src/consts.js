@@ -4,7 +4,7 @@ export const appConfig = {
   JWT_SECRET: process.env.JWT_SECRET,
   EMAIL: process.env.EMAIL,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
-  MINUTE: process.env. MINUTE,
+  MINUTE: process.env.MINUTE,
   CLIENT_BASE_URL: process.env.CLIENT_BASE_URL,
   VERIFY_URL: process.env.VERIFY_URL
 };

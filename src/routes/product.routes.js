@@ -1,11 +1,11 @@
-import { Router } from "express"
-import { ProductController } from "../controllers/product.controller.js"
-import { useAuth, roleCheck } from "../middlewares/auth.middleware.js"
-import multer from "multer"
+import { Router } from "express";
+import { ProductController } from "../controllers/product.controller.js";
 
-export const productRoutes = Router()
-const controller = ProductController()
+export const productRouter = Router();
+const controller = ProductController;
 
-const upload = multer();
-
-productRoutes.post("/create", useAuth, upload.none(), controller.createProduct)
+productRouter.post('/create' , controller.createProduct)
+productRouter.get('/all' , controller.getAllProduct)
+productRouter.get('/:id' , controller.getProductById)
+productRouter.put('/update/:id' , controller.updateProduct)
+productRouter.delete('/delete/:id' , controller.deleteProduct)
