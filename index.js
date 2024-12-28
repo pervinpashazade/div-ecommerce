@@ -4,16 +4,15 @@ import "dotenv/config";
 import { v1Router } from "./src/routes/index.js";
 import { appConfig } from "./src/consts.js";
 import { limiter } from "./src/helpers.js";
-// import cron from "node-cron";
+import cron from "node-cron";
 import { Subscribe } from "./src/models/subscribe.model.js";
 
 const app = express();
 
 app.use(limiter);
-
 app.use(express.json());
-
 app.use("/api/v1", v1Router);
+
 
 mongoose
   .connect(appConfig.MONGO_URL)
@@ -24,30 +23,31 @@ mongoose
     console.error("Error connecting to MongoDB", err);
   });
 
-// app.get("/api/v1/cron", (req, res) => {
-  // every day on 00:00
-  //   cron.schedule("0 0 * * *", async () => {
-  //     await Subscribe.deleteMany({
-  //       isVerifiedEmail: false,
-  //     }).then(() => {
-  //       console.log("Deleted all unverified emails");
-  //     });
 
-  //     console.log("running a task every day on 00:00");
-  //   });
+cron.schedule("0 0 * * *", async () => {
+  try {
+    await Subscribe.deleteMany({ isVerifiedEmail: false });
+    console.log("Deleted all unverified emails at midnight");
+  } catch (error) {
+    console.error("Error during daily email cleanup", error);
+  }
+});
 
-//   cron.schedule("*/10 * * * * *", async () => {
-//     await Subscribe.deleteMany({
-//       isVerifiedEmail: false,
-//     }).then(() => {
-//       console.log("Deleted all unverified emails");
-//     });
+cron.schedule("*/10 * * * * *", async () => {
+  try {
+    await Subscribe.deleteMany({ isVerifiedEmail: false });
+    console.log("Deleted all unverified emails every 10 seconds");
+  } catch (error) {
+    console.error("Error during 10-second email cleanup", error);
+  }
+});
 
-//     console.log("running a task every 10 seconds");
-//   });
-//   res.send("Cron job started");
-// });
+
+app.get("/api/v1/cron", (req, res) => {
+  res.send("Cron jobs are running in the background");
+});
+
 
 app.listen(appConfig.PORT, () => {
-  console.log("Server is running on port 8080");
+  console.log(`Server is running on port ${appConfig.PORT}`);
 });
