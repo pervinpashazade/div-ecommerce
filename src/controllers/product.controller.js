@@ -59,6 +59,27 @@ const createProduct = async (req, res, next) => {
 	}
 };
 
+
+const listProducts = async (req, res) => {
+	try {
+		
+		const products = await Product.find();
+
+		return res.status(200).json({
+			message: "mehsullar ugurla listlendi",
+			products,
+		});
+	} catch (err) {
+		
+		return res.status(500).json({
+			error: error[500],
+			message: err.message,
+		});
+	}
+};
+
+
 export const ProductController = () => ({
 	createProduct,
+	listProducts,
 });

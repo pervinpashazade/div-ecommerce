@@ -11,3 +11,4 @@ const upload = multer();
 productRoutes.post("/create", useAuth,
     //  roleCheck(['super-admin, admin']),
       upload.single('mainImg'),  controller.createProduct)
+productRoutes.get("/product-lists",useAuth, controller.createProduct)
