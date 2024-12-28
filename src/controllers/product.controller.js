@@ -13,8 +13,8 @@ const productSchema = Joi.object({
 	sku: Joi.string().required(),
 	categories: Joi.array().items(Joi.string()).optional(),
 	tags: Joi.array().items(Joi.string()).optional(),
-	mainImg: Joi.object().required(),
-	images: Joi.array().items(Joi.string()).optional(),
+	mainImg: Joi.object().optional(),
+	images: Joi.array().items(Joi.object()).optional(),
 	options: Joi.array()
 		.items(
 			Joi.object({
@@ -23,41 +23,43 @@ const productSchema = Joi.object({
 				code: Joi.string().optional(),
 			})
 		)
-		.optional(),
+		.optional()   
 });
 
 const createProduct = async (req, res, next) => {
-	// return res.json(req.body)
-	const validData = await productSchema
-		.validateAsync(
-			{ ...req.body, mainImg: req.file },
-			{ abortEarly: false }
-		)
-		.catch((err) => {
-			return res.status(422).json({
-				message: error[422],
-				error: err?.details.map((item) => item.message),
-			});
-		});
-	try {
-		const newproduct = await Product.create({
-			...validData,
-			main_img_url: validData.mainImg.filename,
-		});
-        console.log(validData);
-        
 
-		return res.status(201).json({
-			message: "Məhsul yaradıldı",
-			newproduct,
-		});
-	} catch (err) {
-		return res.status(500).json({
-			error: error[500],
-			message: err.message,
-		});
-	}
+    const validData = await productSchema
+        .validateAsync(
+            { ...req.body, mainImg: req.files, images: req.files },
+            { abortEarly: false }
+        )
+        .catch((err) => {
+            return res.status(422).json({
+                message: error[422],
+                error: err?.details.map((item) => item.message),
+            });
+        });
+        
+        
+    try {
+        const newProduct = await Product.create({
+            ...validData,
+            main_img_url: req.files?.mainImg[0].filename ,
+            image_urls: req.files?.images.map(item => item.filename) , 
+        });
+
+        return res.status(201).json({
+            message: "Məhsul yaradıldı",
+            newProduct,
+        });
+    } catch (err) {
+        return res.status(500).json({
+            message: error[500],
+            error: err.message,
+        });
+    }
 };
+
 
 export const ProductController = () => ({
 	createProduct,
