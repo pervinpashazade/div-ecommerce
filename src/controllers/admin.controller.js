@@ -1,45 +1,37 @@
 import Joi from "joi";
 import { User } from "../models/user.model.js";
 import bcrypt from "bcrypt";
-import { error, usersList } from "../consts.js";
+import { error, userRoleList } from "../consts.js";
 import { appConfig } from "../consts.js";
 import { transporter } from "../helpers.js";
 
 const userCreate = async (req, res, next) => {
-  const validData = await Joi.object({
-    name: Joi.string().trim().min(3).max(12).required(),
-    surname: Joi.string().trim().min(3).max(12).required(),
-    email: Joi.string().email().required(),
-    password: Joi.string().trim().min(6).max(16).required(),
-    role: Joi.string().trim(),
-  })
-    .validateAsync(req.body, { abortEarly: false })
-    .catch((err) => {
-      return res.status(422).json({
-        message: error[422],
-        error: err.details.map((item) => item.message),
-      });
-    });
-
-  if (validData.role && !usersList.includes(validData.role)) {
-    return res.status(400).json({
-      message: `Invalid role! Allowed roles: ${usersList}`,
-    });
-  }
-
   try {
+    const validData = await Joi.object({
+      name: Joi.string().trim().min(3).max(12).required(),
+      surname: Joi.string().trim().min(3).max(12).required(),
+      email: Joi.string().email().required(),
+      password: Joi.string().trim().min(6).max(16).required(),
+      role: Joi.string().trim(),
+    }).validateAsync(req.body, { abortEarly: false });
+
+    if (validData.role && !userRoleList.includes(validData.role)) {
+      const error = new Error(`Invalid role! Allowed roles: ${userRoleList}`);
+      error.status = 400;
+      throw error;
+    }
+
     const existUser = await User.findOne({ email: validData.email });
 
-    if (existUser)
-      return res.status(409).json({
-        message: error[409],
-      });
+    if (existUser) {
+      const error = new Error("User already exists");
+      error.status = 409;
+      throw error;
+    }
 
     validData.password = await bcrypt.hash(validData.password, 10);
 
-    const newUser = new User({
-      ...validData,
-    });
+    const newUser = new User({ ...validData });
     await newUser.save();
 
     const mailOptions = {
@@ -60,14 +52,11 @@ const userCreate = async (req, res, next) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error("Error sending email: ", error);
-        return res.status(500).json({
-          message: error.message,
-          error,
-        });
+        const mailError = new Error("Error sending email");
+        mailError.status = 500;
+        throw mailError;
       } else {
         console.log("Email sent: ", info);
-        return res.json({ message: "Check your email" });
       }
     });
 
@@ -75,10 +64,7 @@ const userCreate = async (req, res, next) => {
 
     return res.status(201).json({ _id, name, surname, email, role });
   } catch (err) {
-    return res.status(500).json({
-      message: error[500],
-      error: err.message,
-    });
+    next(err);
   }
 };
 
@@ -96,24 +82,13 @@ const userEdit = async (req, res) => {
       abortEarly: false,
     });
 
-    if (validData.role && !usersList.includes(validData.role)) {
+    if (validData.role && !userRoleList.includes(validData.role)) {
       return res.status(400).json({
-        message: `Invalid role! Allowed roles: ${usersList}`,
+        message: `Invalid role! Allowed roles: ${userRoleList}`,
       });
     }
 
     const user = req.user;
-
-    // const isUnchanged =
-    //   user.name === (validData.name || user.name) &&
-    //   user.surname === (validData.surname || user.surname) &&
-    //   user.email === (validData.email || user.email) &&
-    //   user.role === (validData.role || user.role) &&
-    //   user.status === (validData.status || user.status);
-
-    // if (isUnchanged) {
-    //   return res.status(200).json({ message: "Heç bir dəyişiklik yoxdur" });
-    // }
 
     const changedFields = {};
     Object.keys(validData).forEach((key) => {
@@ -138,22 +113,6 @@ const userEdit = async (req, res) => {
     if (!updatedUser) {
       return res.status(500).json({ message: error[500] });
     }
-
-    // const mailOptions = {
-    //   from: appConfig.EMAIL,
-    //   to: validData.email || user.email,
-    //   subject: "Hello",
-    //   html: `<h3>Update User</h3>
-    //       <p>Your user information has been updated</p>
-    //       <p>You can see the changes below:</p>
-    //       <ul>
-    //         <li><strong>Name:</strong> ${updatedUser.name}</li>
-    //         <li><strong>Surname:</strong> ${updatedUser.surname}</li>
-    //         <li><strong>Email:</strong> ${updatedUser.email}</li>
-    //         <li><strong>Status:</strong> ${updatedUser.status}</li>
-    //         <li><strong>Role:</strong> ${updatedUser.role}</li>
-    //       </ul>`,
-    // };
 
     const mailOptions = {
       from: appConfig.EMAIL,
@@ -221,7 +180,23 @@ const adminList = async (req, res) => {
       });
     }
 
-    return res.status(200).json(admins);
+    const page = req.query.page || 1;
+    const limit = req.query.perpage || 5;
+
+    const before_page = (page - 1) * limit;
+    const list = await User.find({ role: "admin" })
+      .skip(before_page)
+      .limit(limit);
+
+    res.status(200).json({
+      data: list,
+      pagination: {
+        admins,
+        currentpage: page,
+        messagesCount: list.length,
+        allPages: Math.ceil(admins / limit),
+      },
+    });
   } catch (err) {
     return res.status(500).json({
       message: error[500],
@@ -230,8 +205,8 @@ const adminList = async (req, res) => {
   }
 };
 
-const userList = async (req, res) => {
-  res.json(usersList);
+const RoleList = async (req, res) => {
+  res.json(userRoleList);
 };
 
 export const AdminController = () => ({
@@ -239,5 +214,5 @@ export const AdminController = () => ({
   userEdit,
   userDelete,
   adminList,
-  userList,
+  RoleList,
 });

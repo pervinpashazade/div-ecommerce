@@ -99,7 +99,7 @@ const verifyEmail = async (req, res, next) => {
 
     const verifyCode = Math.floor(100000 + Math.random() * 600000);
 
-    const verifyExpiredIn = moment().add(appConfig.MINUTE, "minutes");
+    const verifyExpiredIn = moment().add(appConfig.VALIDITY_MINUTE_MAIL, "minutes");
 
     req.user.verifyCode = verifyCode;
     req.user.verifyExpiredIn = verifyExpiredIn;
@@ -226,7 +226,7 @@ const ForgetPass = async (req, res, next) => {
   }
 
   const token = uuidv4();
-  const resetExpiredIn = moment().add(appConfig.MINUTE, "minutes");
+  const resetExpiredIn = moment().add(appConfig.VALIDITY_MINUTE_MAIL, "minutes");
 
   res.json("Check your email");
 
@@ -239,7 +239,7 @@ const ForgetPass = async (req, res, next) => {
     html: `<h3>Password Reset</h3>
                <p>To reset your password, click the link below:</p>
                <a href="${resetUrl}">Reset Password</a>
-               <p>This link is valid for ${appConfig.MINUTE} minute.</p>`,
+               <p>This link is valid for ${appConfig.VALIDITY_MINUTE_MAIL} minute.</p>`,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {

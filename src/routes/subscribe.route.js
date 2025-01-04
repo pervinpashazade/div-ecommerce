@@ -5,5 +5,6 @@ import { subscribeController } from "../controllers/subscribe.controller.js"
 export const subscribeRoutes = Router()
 const controller = subscribeController()
 
-subscribeRoutes.post("/verify/email", controller.verifyEmail)
-subscribeRoutes.post('/check/verify/email/:token', controller.checkVerifyToken)
+subscribeRoutes.post("/send/email", controller.sendEmail)
+subscribeRoutes.post('/check/:token', controller.checkVerifyToken)
+subscribeRoutes.get('/list', useAuth, roleCheck(['super-admin', 'admin']), controller.subscribeList)
