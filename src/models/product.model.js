@@ -66,6 +66,6 @@ const productSchema = new mongoose.Schema({
             required: false
         }
     }],
-})
+},{timestamps:true})
 
 export const Product = mongoose.model("Product", productSchema);

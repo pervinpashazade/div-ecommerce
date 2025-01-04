@@ -6,6 +6,7 @@ import { appConfig } from "./src/consts.js";
 import { limiter } from "./src/helpers.js";
 import cron from "node-cron";
 import { Subscribe } from "./src/models/subscribe.model.js";
+import { errorMiddleware } from "./src/middlewares/error.middleware.js";
 
 const app = express();
 
@@ -47,6 +48,8 @@ app.get("/api/v1/cron", (req, res) => {
   });
   res.send("Cron job started");
 });
+
+app.use(errorMiddleware)
 
 app.listen(appConfig.PORT, () => {
   console.log("Server is running on port 8080");

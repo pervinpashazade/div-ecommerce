@@ -4,7 +4,7 @@ export const appConfig = {
   JWT_SECRET: process.env.JWT_SECRET,
   EMAIL: process.env.EMAIL,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
-  MINUTE: process.env. MINUTE,
+  VALIDITY_MINUTE_MAIL: process.env.VALIDITY_MINUTE_MAIL,
   CLIENT_BASE_URL: process.env.CLIENT_BASE_URL,
   VERIFY_URL: process.env.VERIFY_URL
 };
@@ -18,8 +18,8 @@ export const error = {
   401: "Doğrulama xətası! Giriş etibarsızdır və ya parol yanlışdır.",
 };
 
-export const usersList = [
-  "customer",
+export const userRoleList = [
+"customer",
 "admin", 
 "superadmin", 
 "ordinator", 

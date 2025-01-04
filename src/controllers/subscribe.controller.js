@@ -6,7 +6,7 @@ import { User } from "../models/user.model.js";
 import { Subscribe } from "../models/subscribe.model.js";
 import { transporter } from "../helpers.js";
 
-const verifyEmail = async (req, res, next) => {
+const sendEmail = async (req, res, next) => {
   try {
     const { email } = await Joi.object({
       email: Joi.string().trim().email().required(),
@@ -26,7 +26,11 @@ const verifyEmail = async (req, res, next) => {
 
     const token = uuidv4();
 
-    const verifyExpiredIn = moment().add(appConfig.MINUTE, "minutes");
+    const verifyExpiredIn = moment().add(
+      appConfig.VALIDITY_MINUTE_MAIL,
+      "minutes"
+    );
+
     const verifyUrl = `${appConfig.VERIFY_URL}${token}`;
 
     const mailOptions = {
@@ -36,7 +40,7 @@ const verifyEmail = async (req, res, next) => {
       html: `<h3>Verify Email</h3>
                    <p>To verify your email, click the link below:</p>
                    <a href="${verifyUrl}">Verify Email</a>
-                   <p>This link is valid for ${appConfig.MINUTE} minute.</p>`,
+                   <p>This link is valid for ${appConfig.VALIDITY_MINUTE_MAIL} minute.</p>`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -55,22 +59,22 @@ const verifyEmail = async (req, res, next) => {
     if (subscribe) {
       subscribe.verifyExpiredIn = verifyExpiredIn;
       subscribe.token = token;
-      res.json(subscribe);
+      const { _id, isVerifiedEmail } = subscribe;
+       res.status(201).json({_id, email, isVerifiedEmail });
       return subscribe.save();
     }
 
-    await Subscribe.create({
+    const newSubscribe = await Subscribe.create({
       email,
       verifyExpiredIn,
       token,
-    })
-      .then((newSubscribe) => res.status(201).json(newSubscribe))
-      .catch((error) =>
-        res.status(500).json({
-          message: "Xeta bash verdi!",
-          error,
-        })
-      );
+    });
+    const { _id, isVerifiedEmail } = newSubscribe;
+
+    return res.status(201).json({ _id, email, isVerifiedEmail });
+
+
+    
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -120,7 +124,34 @@ const checkVerifyToken = async (req, res) => {
   }
 };
 
+const subscribeList = async (req, res) => {
+  const sbcList = await Subscribe.find();
+
+  if (!sbcList.length) {
+    return res.status(404).json({
+      message: "No subscribe found.",
+    });
+  }
+
+  const page = req.query.page || 1;
+  const limit = req.query.perpage || 5;
+
+  const before_page = (page - 1) * limit;
+  const list = await Subscribe.find().skip(before_page).limit(limit);
+
+  res.status(200).json({
+    data: list,
+    pagination: {
+      sbcList,
+      currentpage: page,
+      messagesCount: list.length,
+      allPages: Math.ceil(sbcList / limit),
+    },
+  });
+};
+
 export const subscribeController = () => ({
-  verifyEmail,
+  sendEmail,
   checkVerifyToken,
+  subscribeList,
 });

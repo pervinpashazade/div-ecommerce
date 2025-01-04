@@ -10,4 +10,4 @@ adminRoutes.post("/create", useAuth, roleCheck(['super-admin']),  contoller.user
 adminRoutes.put("/edit/:id", useAuth, roleCheck(['super-admin']), idCheck,  contoller.userEdit)
 adminRoutes.delete("/delete/:id", useAuth, roleCheck(['super-admin','admin']),idCheck,  contoller.userDelete)
 adminRoutes.get("/list", useAuth, roleCheck(['super-admin']), contoller.adminList)
-adminRoutes.get('/users/list', useAuth, roleCheck(['super-admin','admin']), contoller.userList)
+adminRoutes.get('/users/list', useAuth, roleCheck(['super-admin','admin']), contoller.RoleList)
